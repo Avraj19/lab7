@@ -1,0 +1,95 @@
+---
+
+
+
+- name: app
+  hosts: app
+  remote_user: sudo
+  become: true
+  tasks:
+
+    - name: ensure nginx is at the latest version
+      apt:
+        name: nginx
+        state: latest
+
+    - name: start nginx
+      service:
+        name: nginx
+        state: started
+      become: yes
+
+    - name: ensure git is at the latest version
+      apt: name=git state=latest
+
+    - name: Add Node 13 PPA
+      become: yes
+      shell: curl -sL https://deb.nodesource.com/setup_13.x | bash -
+      args:
+        warn: no
+
+    - name: Install NodeJS and npm
+      become: yes
+      apt:
+        name:
+        - nodejs
+        state: latest
+        update_cache: yes
+
+    - name: install pm2 is with npm
+      command: npm install pm2 -g
+    -
+      shell: echo "export DB_HOST=mongodb://192.168.10.150:27017/posts" >> /home/vagrant/.bashrc
+      name: "Set Variable Enviroment"
+
+    - name: install pm2 is with npm
+      command: npm install pm2 -g
+
+    - name: nginx restart
+      service:
+        name: nginx
+        state: restarted
+        enabled: True
+
+    - name: install pm2 is with npm
+      command: npm install pm2 -g
+    -
+      shell: echo "export DB_HOST=mongodb://192.168.10.150:27017/posts" >> /home/vagrant/.bashrc
+      name: "Set Variable Enviroment"
+
+
+
+- name: db
+  hosts: db
+  remote_user: sudo
+  become: true
+  tasks:
+
+
+
+    - name: mongo install key
+      apt_key:
+        url: https://www.mongodb.org/static/pgp/server-4.2.asc
+        state: present
+
+
+
+    - name: MongoDB - Add Repository
+      apt_repository:
+        filename: '/etc/apt/sources.list.d/mongodb-org-4.2.list'
+        repo: 'deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse'
+        state: present
+        update_cache: yes
+
+
+
+    - name: MongoDB - Install MongoDB
+      apt: name=mongodb-org state=present update_cache=yes
+
+
+    - name: changing the config on db
+      shell: sudo rm /etc/mongod.conf; sudo ln -s /home/ubuntu/environment/mongod.conf /etc/mongod.conf
+
+
+    - name: update
+      shell: sudo systemctl restart mongod; sudo systemctl enable mongod
